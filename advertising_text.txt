@@ -1,0 +1,156 @@
+Advertising Dataset - Sales Prediction using Multiple Linear Regression
+
+Business Scenario
+-----------------
+A company sells a consumer product and advertises on TV, Radio and Newspaper.
+The question is simple: if we know how much is spent on each channel, can we
+estimate the sales?
+
+I used the Advertising dataset (200 rows; columns TV, Radio, Newspaper, Sales).
+Advertising values are spending in thousands, and Sales is in thousands of units.
+
+
+1. Load the dataset and check it
+--------------------------------
+Python code:
+
+import pandas as pd
+df = pd.read_csv("Advertising.csv")
+print(df.head())
+print(df.shape)
+df.info()
+print(df.isnull().sum())
+
+What I found:
+- 200 rows and 4 columns (TV, Radio, Newspaper, Sales)
+- No missing values, so no cleaning was needed
+
+
+2. Choose inputs and target
+---------------------------
+X = df[["TV", "Radio", "Newspaper"]]   # the clues
+y = df["Sales"]                        # the answer we want to predict
+
+
+3. Split the data (80:20)
+-------------------------
+from sklearn.model_selection import train_test_split
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+Training data: 160 rows. Testing data: 40 rows.
+The model learns from the 160 rows and is then tested on 40 rows it has
+never seen, like studying from practice papers and then sitting a real exam.
+
+
+4. Build and train the model
+----------------------------
+from sklearn.linear_model import LinearRegression
+model = LinearRegression()
+model.fit(X_train, y_train)
+
+I used Multiple Linear Regression because Sales depends on three inputs.
+
+
+5. Predict sales on unseen data
+-------------------------------
+y_pred = model.predict(X_test)
+
+I placed the actual and predicted values side by side in a table and added
+an Error column (Actual - Predicted) to see where the model misses.
+
+
+6. Predict for a new budget
+---------------------------
+TV = 150, Radio = 20, Newspaper = 30
+
+new_budget = pd.DataFrame({"TV": [150], "Radio": [20], "Newspaper": [30]})
+print(model.predict(new_budget)[0])
+
+Predicted Sales: about 13.5 thousand units (approx; confirm by running).
+The exact value changes slightly with a different train/test split.
+
+
+7. Evaluate the model
+---------------------
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+mae  = mean_absolute_error(y_test, y_pred)
+mse  = mean_squared_error(y_test, y_pred)
+rmse = mse ** 0.5
+r2   = r2_score(y_test, y_pred)
+
+Approximate results (random_state=42):
+MAE  : about 1.5
+MSE  : about 3.2
+RMSE : about 1.8
+R2   : about 0.90
+
+What this means:
+- On average, predictions are off by roughly 1.5 thousand units (MAE).
+- RMSE is a little higher because it punishes big mistakes more.
+- An R2 of about 0.90 means the model explains around 90% of the ups and
+  downs in sales on the test data. That is a strong result for a simple model.
+
+
+8. Understand the coefficients
+------------------------------
+print("Intercept:", model.intercept_)
+print(coefficients)
+
+Approximate values:
+Intercept  =  2.98
+TV         =  0.045
+Radio      =  0.189
+Newspaper  =  0.003
+
+Meaning (keeping the other two budgets the same):
+- TV: each extra 1 unit of TV spending adds about 0.045 units of sales.
+- Radio: each extra 1 unit of Radio spending adds about 0.189 units of sales.
+- Newspaper: the coefficient is almost zero, so once TV and Radio are
+  included, Newspaper adds almost nothing.
+
+
+9. Strongest and weakest channel
+--------------------------------
+Strongest impact: Radio
+Least impact: Newspaper
+
+Caution: coefficient size is not a perfect way to rank channels, because
+each channel has a different cost and a different spending range. For a fairer
+comparison, use standardized coefficients and look at cost per unit.
+
+
+10. Actual vs Predicted graph
+-----------------------------
+A scatter plot of actual vs predicted sales with a dashed diagonal line.
+Points close to the line mean good predictions. Points far from it are
+bigger errors.
+
+
+11. Business recommendation
+---------------------------
+I would pay more attention to Radio, since it shows the strongest effect per
+unit of spending. I would not cut Newspaper completely based on this model
+alone. Before changing the budget, the company should check campaign costs,
+audience reach and profit per channel. A safe plan is to raise the Radio
+budget a little, track sales and return on ad spend, and compare the results
+with the existing campaigns.
+
+
+12. Technical improvements
+--------------------------
+- Use cross-validation instead of a single train/test split.
+- Try Ridge Regression, Random Forest or Gradient Boosting.
+- Check for outliers.
+- Test whether the relationship is really a straight line. TV and Radio
+  together may work better than each alone (an interaction effect).
+
+
+Final conclusion
+----------------
+Advertising spending is strongly linked to sales. Radio has the strongest
+effect and Newspaper the weakest. For TV=150, Radio=20, Newspaper=30, the
+model predicts roughly 13.5 thousand units. With a test R2 of about 0.90,
+the model is a good guide, but it should not be the only basis for changing
+the advertising budget.
